@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>カドトリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#DCE4DF; --panel:#EEF2EF; --frame:#2B3A55; --cell:#F8FAF8; --line:#CBD5CE;
+  --ink:#1F2A3A; --muted:#5E6B78;
+  --me:#EFA00B; --me-dark:#B97500; --ai:#2E86AB; --ai-dark:#1D5F7C;
+  --ok:rgba(239,160,11,.55); --bad:rgba(214,64,69,.45); --hint:#EFA00B;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A22; --panel:#1C2430; --frame:#0B1017; --cell:#232D3A; --line:#2F3B4B;
+    --ink:#E7ECF2; --muted:#93A0B0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A22; --panel:#1C2430; --frame:#0B1017; --cell:#232D3A; --line:#2F3B4B;
+  --ink:#E7ECF2; --muted:#93A0B0;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+main{max-width:560px;margin:0 auto;padding:14px 12px 24px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+h1{font-family:"Dela Gothic One","M PLUS Rounded 1c",sans-serif;font-weight:400;font-size:2rem;margin:0;letter-spacing:.02em;line-height:1}
+h1 span{display:inline-block;width:.55em;height:.55em;margin-left:.08em;vertical-align:.05em;background:var(--me);border-radius:2px;transform:rotate(45deg)}
+.score{display:flex;gap:10px;font-weight:800;font-size:.95rem}
+.score b{display:inline-flex;align-items:center;gap:5px}
+.score i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.status{min-height:1.6em;margin:0 0 8px;font-weight:700;color:var(--muted);font-size:.95rem}
+.status.me{color:var(--me-dark)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .status.me{color:var(--me)}}
+
+.board-wrap{background:var(--frame);padding:6px;border-radius:10px}
+.board{display:grid;grid-template-columns:repeat(14,1fr);gap:1px;background:var(--line);aspect-ratio:1;touch-action:manipulation;user-select:none}
+.c{background:var(--cell);position:relative}
+.c.p0{background:var(--me);box-shadow:inset 0 -2px 0 var(--me-dark)}
+.c.p1{background:var(--ai);box-shadow:inset 0 -2px 0 var(--ai-dark)}
+.c.last{animation:pop .35s ease-out}
+@keyframes pop{from{filter:brightness(1.5)}to{filter:none}}
+.c.start::after{content:"";position:absolute;inset:28%;border-radius:50%;border:2px solid var(--muted);opacity:.6}
+.c.start0::after{border-color:var(--me)}
+.c.start1::after{border-color:var(--ai)}
+.c.hint::before{content:"";position:absolute;inset:40%;border-radius:50%;background:var(--hint);opacity:.55}
+.c.g-ok{background:var(--ok)!important;box-shadow:inset 0 0 0 2px var(--me)}
+.c.g-bad{background:var(--bad)!important}
+
+.controls{display:flex;gap:8px;align-items:stretch;margin:10px 0}
+.hand{flex:0 0 76px;height:76px;background:var(--panel);border-radius:10px;display:grid;place-items:center}
+.btns{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{font:inherit;font-weight:700;color:var(--ink);background:var(--panel);border:0;border-radius:10px;padding:8px;cursor:pointer;min-height:34px}
+button:focus-visible{outline:3px solid var(--ai);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--me);color:#1F1400}
+.btns .wide{grid-column:span 2}
+
+.tray{display:flex;flex-wrap:wrap;gap:6px;background:var(--panel);border-radius:10px;padding:8px}
+.tray button{padding:5px;min-height:0;background:transparent;border:2px solid transparent;border-radius:8px;display:grid;place-items:center}
+.tray button.sel{border-color:var(--me);background:color-mix(in srgb,var(--me) 14%,transparent)}
+.tray button.used{visibility:hidden}
+.mini{display:grid;gap:1px}
+.mini i{width:9px;height:9px;border-radius:2px;background:var(--me)}
+.mini i.e{background:transparent}
+.hand .mini i{width:13px;height:13px}
+.tray-label{font-size:.8rem;color:var(--muted);margin:14px 0 6px;font-weight:700}
+.opp{display:flex;flex-wrap:wrap;gap:6px;opacity:.85}
+.opp .mini i{width:6px;height:6px;background:var(--ai)}
+.opp .mini i.e{background:transparent}
+
+.rules{margin-top:16px;font-size:.88rem;line-height:1.75;color:var(--muted)}
+.rules p{margin:.3em 0}
+.rules strong{color:var(--ink)}
+
+.over{position:fixed;inset:0;background:rgba(10,15,22,.55);display:none;place-items:center;padding:20px}
+.over.show{display:grid}
+.card{background:var(--panel);border-radius:14px;padding:22px 24px;text-align:center;max-width:320px;width:100%}
+.card h2{font-family:"Dela Gothic One",sans-serif;font-weight:400;font-size:1.8rem;margin:0 0 6px}
+.card p{margin:0 0 16px;color:var(--muted);font-weight:700}
+@media (prefers-reduced-motion: reduce){.c.last{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>カドトリ<span></span></h1>
+    <div class="score">
+      <b><i style="background:var(--me)"></i>あなた <span id="s0">0</span></b>
+      <b><i style="background:var(--ai)"></i>CPU <span id="s1">0</span></b>
+    </div>
+  </header>
+  <p class="status me" id="status"></p>
+  <div class="board-wrap"><div class="board" id="board" aria-label="盤面"></div></div>
+
+  <div class="controls">
+    <div class="hand" id="hand"></div>
+    <div class="btns">
+      <button id="rot">回転 ⟳</button>
+      <button id="flip">反転 ⇋</button>
+      <button id="place" class="primary wide" disabled>ここに置く</button>
+    </div>
+  </div>
+
+  <div class="tray" id="tray"></div>
+  <div class="tray-label">CPUの残りのピース</div>
+  <div class="opp" id="opp"></div>
+
+  <div class="rules">
+    <p><strong>遊び方</strong>　ピースを選んで盤面をタップすると仮置き、もう一度タップ（または「ここに置く」）で確定します。</p>
+    <p>最初のピースは自分の色の丸印を覆うように置きます。2つ目からは、<strong>自分のピースと角だけで接し</strong>、辺では接しないように置きます。相手のピースとは辺で接してもOK。</p>
+    <p>置けなくなったらパス。両者とも置けなくなったら終了で、置いたマスの数が多いほうの勝ちです。オレンジの点は、あなたが次に置ける起点の目安です。</p>
+  </div>
+</main>
+
+<div class="over" id="over"><div class="card">
+  <h2 id="resTitle"></h2><p id="resText"></p>
+  <button class="primary" id="again" style="width:100%">もう一度遊ぶ</button>
+</div></div>
+
+<script>
+(() => {
+const N = 14;
+const START = [[4,4],[9,9]];
+const SHAPES = [
+  [[0,0]],
+  [[0,0],[0,1]],
+  [[0,0],[0,1],[0,2]], [[0,0],[1,0],[1,1]],
+  [[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[2,1]], [[0,0],[0,1],[0,2],[1,1]], [[0,0],[0,1],[1,0],[1,1]], [[0,1],[0,2],[1,0],[1,1]],
+  [[0,1],[0,2],[1,0],[1,1],[2,1]], [[0,0],[0,1],[0,2],[0,3],[0,4]], [[0,0],[1,0],[2,0],[3,0],[3,1]], [[0,1],[1,1],[2,0],[2,1],[3,0]],
+  [[0,0],[0,1],[1,0],[1,1],[2,0]], [[0,0],[0,1],[0,2],[1,1],[2,1]], [[0,0],[0,2],[1,0],[1,1],[1,2]], [[0,0],[1,0],[2,0],[2,1],[2,2]],
+  [[0,0],[1,0],[1,1],[2,1],[2,2]], [[0,1],[1,0],[1,1],[1,2],[2,1]], [[0,1],[1,0],[1,1],[2,1],[3,1]], [[0,0],[0,1],[1,1],[2,1],[2,2]]
+];
+
+function norm(cells){
+  const mr = Math.min(...cells.map(p=>p[0])), mc = Math.min(...cells.map(p=>p[1]));
+  return cells.map(([r,c])=>[r-mr,c-mc]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+}
+const rotate = cells => norm(cells.map(([r,c])=>[c,-r]));
+const flip = cells => norm(cells.map(([r,c])=>[r,-c]));
+function allOrients(shape){
+  const out=[], seen=new Set(); let s=norm(shape);
+  for(let f=0;f<2;f++){ for(let k=0;k<4;k++){ const key=JSON.stringify(s); if(!seen.has(key)){seen.add(key);out.push(s);} s=rotate(s);} s=flip(s); }
+  return out;
+}
+const ORIENTS = SHAPES.map(allOrients);
+function anchorOf(cells){
+  const h=Math.max(...cells.map(p=>p[0])), w=Math.max(...cells.map(p=>p[1]));
+  let best=cells[0], bd=1e9;
+  for(const p of cells){ const d=(p[0]-h/2)**2+(p[1]-w/2)**2; if(d<bd){bd=d;best=p;} }
+  return best;
+}
+
+let board, used, first, turn, over, lastCells, sel, cur, ghost, busy;
+
+function reset(){
+  board = new Array(N*N).fill(-1);
+  used = [new Set(), new Set()];
+  first = [true,true];
+  turn = 0; over=false; lastCells=[]; busy=false;
+  sel = 20; cur = norm(SHAPES[sel]); ghost = null;
+  document.getElementById('over').classList.remove('show');
+  setStatus('あなたの番です。丸印を覆うように置きましょう', true);
+  render();
+}
+
+const inB=(r,c)=>r>=0&&c>=0&&r<N&&c<N;
+const at=(r,c)=>board[r*N+c];
+
+function legal(p, cells){
+  let corner=false, start=false;
+  for(const [r,c] of cells){
+    if(!inB(r,c) || at(r,c)!==-1) return false;
+    for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){ const rr=r+dr, cc=c+dc; if(inB(rr,cc)&&at(rr,cc)===p) return false; }
+    if(first[p]){ if(r===START[p][0]&&c===START[p][1]) start=true; }
+    else for(const [dr,dc] of [[1,1],[1,-1],[-1,1],[-1,-1]]){ const rr=r+dr, cc=c+dc; if(inB(rr,cc)&&at(rr,cc)===p) corner=true; }
+  }
+  return first[p] ? start : corner;
+}
+
+function cornerSpots(p){
+  const out=[];
+  if(first[p]){ const [r,c]=START[p]; if(at(r,c)===-1) out.push([r,c]); return out; }
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    if(at(r,c)!==-1) continue;
+    let bad=false, ok=false;
+    for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){ const rr=r+dr,cc=c+dc; if(inB(rr,cc)&&at(rr,cc)===p){bad=true;break;} }
+    if(bad) continue;
+    for(const [dr,dc] of [[1,1],[1,-1],[-1,1],[-1,-1]]){ const rr=r+dr,cc=c+dc; if(inB(rr,cc)&&at(rr,cc)===p){ok=true;break;} }
+    if(ok) out.push([r,c]);
+  }
+  return out;
+}
+
+function moves(p, limit){
+  const res=[];
+  const spots = cornerSpots(p);
+  if(!spots.length) return res;
+  const seen=new Set();
+  for(let i=0;i<SHAPES.length;i++){
+    if(used[p].has(i)) continue;
+    for(const o of ORIENTS[i]){
+      for(const [sr,sc] of spots){
+        for(const [pr,pc] of o){
+          const dr=sr-pr, dc=sc-pc;
+          const key=i+':'+o.length+':'+JSON.stringify(o)+':'+dr+','+dc;
+          if(seen.has(key)) continue; seen.add(key);
+          const cells=o.map(([r,c])=>[r+dr,c+dc]);
+          if(legal(p,cells)){ res.push({i,cells}); if(limit&&res.length>=limit) return res; }
+        }
+      }
+    }
+  }
+  return res;
+}
+
+function place(p, i, cells){
+  for(const [r,c] of cells) board[r*N+c]=p;
+  used[p].add(i); first[p]=false; lastCells=cells;
+}
+
+function score(p){ return board.filter(v=>v===p).length; }
+
+// ---------- rendering ----------
+const boardEl=document.getElementById('board');
+const cellEls=[];
+for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+  const d=document.createElement('div'); d.className='c'; d.dataset.r=r; d.dataset.c=c;
+  boardEl.appendChild(d); cellEls.push(d);
+}
+
+function miniGrid(cells, cls){
+  const h=Math.max(...cells.map(p=>p[0]))+1, w=Math.max(...cells.map(p=>p[1]))+1;
+  const g=document.createElement('div'); g.className='mini'+(cls?' '+cls:'');
+  g.style.gridTemplateColumns=`repeat(${w},auto)`;
+  const set=new Set(cells.map(p=>p[0]+','+p[1]));
+  for(let r=0;r<h;r++) for(let c=0;c<w;c++){ const i=document.createElement('i'); if(!set.has(r+','+c)) i.className='e'; g.appendChild(i); }
+  return g;
+}
+
+function ghostCells(){
+  if(!ghost || sel==null) return null;
+  const [ar,ac]=anchorOf(cur);
+  return cur.map(([r,c])=>[r-ar+ghost[0], c-ac+ghost[1]]);
+}
+
+function render(){
+  const hints = (!over && turn===0) ? new Set(cornerSpots(0).map(p=>p[0]*N+p[1])) : new Set();
+  const lastSet = new Set(lastCells.map(p=>p[0]*N+p[1]));
+  const gc = ghostCells();
+  const gok = gc && turn===0 && legal(0,gc);
+  const gset = new Set(gc ? gc.filter(([r,c])=>inB(r,c)).map(p=>p[0]*N+p[1]) : []);
+  for(let k=0;k<N*N;k++){
+    const r=Math.floor(k/N), c=k%N, v=board[k];
+    let cls='c';
+    if(v>=0) cls+=' p'+v+(lastSet.has(k)?' last':'');
+    else {
+      if(r===START[0][0]&&c===START[0][1]&&first[0]) cls+=' start start0';
+      if(r===START[1][0]&&c===START[1][1]&&first[1]) cls+=' start start1';
+      if(hints.has(k) && !gset.size) cls+=' hint';
+    }
+    if(gset.has(k)) cls+= gok?' g-ok':' g-bad';
+    if(cellEls[k].className!==cls) cellEls[k].className=cls;
+  }
+  document.getElementById('s0').textContent=score(0);
+  document.getElementById('s1').textContent=score(1);
+
+  const hand=document.getElementById('hand'); hand.innerHTML='';
+  if(sel!=null) hand.appendChild(miniGrid(cur));
+  document.getElementById('place').disabled=!gok;
+  const myTurn = turn===0 && !over && !busy;
+  document.getElementById('rot').disabled = !myTurn || sel==null;
+  document.getElementById('flip').disabled = !myTurn || sel==null;
+
+  const tray=document.getElementById('tray'); tray.innerHTML='';
+  SHAPES.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.className=(used[0].has(i)?'used':'')+(i===sel?' sel':'');
+    b.setAttribute('aria-label',`${s.length}マスのピース`);
+    b.appendChild(miniGrid(i===sel?cur:norm(s)));
+    b.onclick=()=>{ if(turn!==0||over) return; if(sel!==i){ sel=i; cur=norm(SHAPES[i]); } render(); };
+    tray.appendChild(b);
+  });
+  const opp=document.getElementById('opp'); opp.innerHTML='';
+  SHAPES.forEach((s,i)=>{ if(!used[1].has(i)) opp.appendChild(miniGrid(norm(s))); });
+}
+
+function setStatus(t, me){ const s=document.getElementById('status'); s.textContent=t; s.className='status'+(me?' me':''); }
+
+// ---------- turns ----------
+function tryPlace(){
+  const gc=ghostCells();
+  if(!gc || turn!==0 || over || busy || !legal(0,gc)) return;
+  place(0, sel, gc);
+  ghost=null;
+  const next=[...Array(21).keys()].find(i=>!used[0].has(i) && SHAPES[i].length>=4) ?? [...Array(21).keys()].reverse().find(i=>!used[0].has(i));
+  sel = next ?? null; if(sel!=null) cur=norm(SHAPES[sel]);
+  advance(1);
+}
+
+function advance(p){
+  const canP = moves(p,1).length>0;
+  const other = 1-p;
+  if(!canP){
+    const canO = moves(other,1).length>0;
+    if(!canO){ return finish(); }
+    turn=other;
+    if(other===0){ setStatus('CPUは置ける場所がないのでパス。あなたの番です', true); render(); }
+    else { setStatus('あなたは置ける場所がないのでパスします…'); render(); setTimeout(aiTurn, 700); }
+    return;
+  }
+  turn=p;
+  if(p===1){ setStatus('CPUが考えています…'); busy=true; render(); setTimeout(aiTurn, 450); }
+  else { setStatus('あなたの番です', true); render(); }
+}
+
+function aiTurn(){
+  const ms = moves(1);
+  if(!ms.length){ busy=false; return advance(0); }
+  const early = used[1].size < 5;
+  let best=null, bs=-1e9;
+  const oppBefore = cornerSpots(0).length;
+  for(const m of ms){
+    for(const [r,c] of m.cells) board[r*N+c]=1;
+    const wasFirst=first[1]; first[1]=false;
+    const mine = cornerSpots(1).length;
+    const theirs = cornerSpots(0).length;
+    first[1]=wasFirst;
+    for(const [r,c] of m.cells) board[r*N+c]=-1;
+    let s = m.cells.length*4 + mine*0.6 + (oppBefore-theirs)*1.1 + Math.random()*1.2;
+    if(early){ const d=m.cells.reduce((a,[r,c])=>a+Math.abs(r-6.5)+Math.abs(c-6.5),0)/m.cells.length; s -= d*0.9; }
+    if(s>bs){bs=s;best=m;}
+  }
+  place(1,best.i,best.cells);
+  busy=false;
+  advance(0);
+}
+
+function finish(){
+  over=true; turn=-1; render();
+  const a=score(0), b=score(1);
+  const t = a>b?'あなたの勝ち！':a<b?'CPUの勝ち':'引き分け';
+  document.getElementById('resTitle').textContent=t;
+  document.getElementById('resText').textContent=`あなた ${a}マス　CPU ${b}マス`;
+  setStatus('ゲーム終了');
+  document.getElementById('over').classList.add('show');
+}
+
+// ---------- input ----------
+function cellFromEvent(e){
+  const el=e.target.closest('.c'); if(!el) return null;
+  return [+el.dataset.r, +el.dataset.c];
+}
+boardEl.addEventListener('pointermove', e=>{
+  if(e.pointerType!=='mouse' || turn!==0 || over || sel==null) return;
+  const p=cellFromEvent(e); if(!p) return;
+  if(!ghost || ghost[0]!==p[0] || ghost[1]!==p[1]){ ghost=p; render(); }
+});
+boardEl.addEventListener('pointerleave', e=>{ if(e.pointerType==='mouse'){ ghost=null; render(); } });
+boardEl.addEventListener('click', e=>{
+  if(turn!==0 || over || sel==null) return;
+  const p=cellFromEvent(e); if(!p) return;
+  const same = ghost && ghost[0]===p[0] && ghost[1]===p[1];
+  if(same){ const gc=ghostCells(); if(legal(0,gc)) return tryPlace(); }
+  ghost=p; render();
+});
+document.getElementById('rot').onclick=()=>{ cur=rotate(cur); render(); };
+document.getElementById('flip').onclick=()=>{ cur=flip(cur); render(); };
+document.getElementById('place').onclick=tryPlace;
+document.getElementById('again').onclick=reset;
+document.addEventListener('keydown', e=>{
+  if(turn!==0||over||sel==null) return;
+  if(e.key==='r'||e.key==='R'){ cur=rotate(cur); render(); }
+  if(e.key==='f'||e.key==='F'){ cur=flip(cur); render(); }
+  if(e.key==='Enter') tryPlace();
+});
+
+reset();
+})();
+</script>
+</body>
+</html>

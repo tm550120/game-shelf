@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>方舟の寄生体</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6E9EF;--panel:#F7F8FA;--ink:#1B2340;--muted:#5A6380;--line:#C3C9D6;
+  --o2:#1F9E8F;--para:#B8336A;--warn:#C9791A;--btn-ink:#fff;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141A2E;--panel:#1E2640;--ink:#E4E8F2;--muted:#8E97B3;--line:#323C5C;
+    --o2:#4FD1BF;--para:#E0588F;--warn:#F0A546;--btn-ink:#10162A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141A2E;--panel:#1E2640;--ink:#E4E8F2;--muted:#8E97B3;--line:#323C5C;
+  --o2:#4FD1BF;--para:#E0588F;--warn:#F0A546;--btn-ink:#10162A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{
+  margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  font-size:16px;line-height:1.7;-webkit-tap-highlight-color:transparent;
+}
+#app{max-width:480px;margin:0 auto;padding:16px 18px 32px}
+h1,h2,.display{font-family:"Dela Gothic One","Hiragino Sans",sans-serif;font-weight:400;line-height:1.25;margin:0}
+h1{font-size:2.4rem;letter-spacing:.02em}
+h2{font-size:1.5rem;margin-bottom:.4em}
+p{margin:.4em 0}
+.muted{color:var(--muted);font-size:.9rem}
+
+/* HUD */
+.hud{display:grid;gap:10px;padding:12px 0 16px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.o2row{display:flex;align-items:center;gap:10px}
+.o2label{font-size:.8rem;color:var(--muted);white-space:nowrap;min-width:5.2em}
+.o2{flex:1;display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.o2 i{height:14px;border-radius:3px;background:var(--line);transition:background .4s}
+.o2 i.on{background:var(--o2);box-shadow:0 0 8px color-mix(in srgb,var(--o2) 50%,transparent)}
+.o2.low i.on{background:var(--warn);box-shadow:0 0 8px color-mix(in srgb,var(--warn) 50%,transparent)}
+.track{display:flex;gap:8px;justify-content:space-between}
+.m{flex:1;aspect-ratio:1;max-width:52px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;position:relative;font-size:.95rem}
+.m.cur{border-color:var(--ink)}
+.m.ok{background:var(--o2);border-color:var(--o2);color:var(--btn-ink)}
+.m.ng{background:var(--para);border-color:var(--para);color:var(--btn-ink)}
+.m sup{position:absolute;top:-6px;right:-4px;font-size:.62rem;background:var(--warn);color:var(--btn-ink);border-radius:8px;padding:0 5px;line-height:1.5}
+
+/* controls */
+button{font:inherit;cursor:pointer}
+.btn{display:block;width:100%;padding:15px 18px;border:0;border-radius:14px;background:var(--ink);color:var(--bg);font-weight:700;font-size:1.05rem;margin-top:12px}
+.btn.o2c{background:var(--o2);color:var(--btn-ink)}
+.btn.pc{background:var(--para);color:var(--btn-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn:focus-visible,.chip:focus-visible,.step:focus-visible,input:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row2 .btn{margin-top:0}
+
+.stepper{display:flex;align-items:center;gap:16px;margin:12px 0 18px}
+.step{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font-size:1.4rem}
+.stepper .display{font-size:2.2rem;min-width:2ch;text-align:center}
+.names{display:grid;gap:8px}
+input[type=text]{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font:inherit}
+
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.chip{padding:12px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font-weight:700;text-align:left}
+.chip[aria-pressed=true]{border-color:var(--o2);background:color-mix(in srgb,var(--o2) 18%,var(--panel))}
+.chip.lead::after{content:" ★";color:var(--warn)}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}
+.center{text-align:center}
+.pass{padding:40px 0 10px}
+.pass .phone{font-size:3rem}
+.pass .who{font-size:1.9rem}
+
+.rolecard{border-radius:18px;padding:24px 20px;text-align:center;margin:14px 0;border:2px solid}
+.rolecard.crew{border-color:var(--o2);background:color-mix(in srgb,var(--o2) 12%,var(--panel))}
+.rolecard.para{border-color:var(--para);background:color-mix(in srgb,var(--para) 12%,var(--panel))}
+.rolecard .emo{font-size:3.2rem;line-height:1.2}
+.rolecard .display{font-size:2rem}
+.side{font-weight:700}
+.crew .side{color:var(--o2)} .para .side{color:var(--para)}
+.info{text-align:left;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.tag{display:inline-block;padding:2px 10px;border-radius:20px;background:var(--bg);margin:3px 4px 3px 0;font-weight:700}
+
+.cards{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:24px 0;perspective:600px}
+.card{width:64px;height:90px;border-radius:10px;display:grid;place-items:center;font-size:1.7rem;font-weight:700;color:var(--btn-ink);
+  animation:flip .5s both;transform-style:preserve-3d}
+.card.s{background:var(--o2)} .card.f{background:var(--para)}
+@keyframes flip{from{transform:rotateY(90deg);opacity:0}to{transform:none;opacity:1}}
+.verdict{animation:fade .4s both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+.roster{display:grid;gap:6px;margin-top:10px}
+.roster div{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;background:var(--bg)}
+.roster .p{color:var(--para);font-weight:700} .roster .c{color:var(--o2);font-weight:700}
+.toast{background:color-mix(in srgb,var(--warn) 20%,var(--panel));border-left:4px solid var(--warn);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:.92rem}
+.rules summary{cursor:pointer;font-weight:700}
+.rules ul{padding-left:1.2em;margin:.5em 0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+<script>
+const SIZES={5:[2,3,2,3,3],6:[2,3,4,3,4],7:[2,3,3,4,4],8:[3,4,4,5,5],9:[3,4,4,5,5],10:[3,4,4,5,5]};
+const CREW={5:3,6:4,7:4,8:5,9:6,10:6};
+const ROLES={
+  nav:{name:'航海士',team:'crew',emo:'🧭',desc:'寄生体の正体を知っている。ただし「幽霊」だけは見えない。最後に正体を見抜かれると負けるので、ほのめかし方が勝負。'},
+  com:{name:'通信士',team:'crew',emo:'📡',desc:'航海士の候補が2人見える。片方は寄生体の擬態体。本物を見極めて守ろう。'},
+  crew:{name:'クルー',team:'crew',emo:'🧑‍🚀',desc:'特別な情報はない。議論と投票で寄生体をあぶり出そう。'},
+  mim:{name:'擬態体',team:'para',emo:'🎭',desc:'通信士からは航海士候補に見える。航海士のふりをして場をかき乱そう。'},
+  gho:{name:'幽霊',team:'para',emo:'👻',desc:'航海士からも見えない寄生体。堂々とクルーとして振る舞える。'},
+  par:{name:'寄生体',team:'para',emo:'🦠',desc:'任務に紛れ込み、失敗カードで船を沈めよう。'}
+};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+let S={n:5,names:[],phase:'setup'};
+const app=document.getElementById('app');
+
+function need2(){return S.n>=7&&S.mi===3?2:1}
+function size(){return SIZES[S.n][S.mi]}
+function P(i){return S.players[i]}
+function nm(i){return esc(P(i).name)}
+function okCount(){return S.results.filter(r=>r).length}
+function ngCount(){return S.results.filter(r=>!r).length}
+
+function startGame(){
+  const n=S.n;
+  const names=Array.from({length:n},(_,i)=>(S.names[i]||'').trim()||`プレイヤー${i+1}`);
+  const crewN=CREW[n],paraN=n-crewN;
+  const roles=['nav','com'];while(roles.length<crewN)roles.push('crew');
+  const para=['mim'];if(n>=7)para.push('gho');while(para.length<paraN)para.push('par');
+  const all=shuffle(roles.concat(para));
+  S.players=names.map((name,i)=>({name,role:all[i]}));
+  Object.assign(S,{phase:'pass',ri:0,mi:0,results:[],oxygen:8,leader:Math.floor(Math.random()*n),team:[],cards:[],mk:0,toast:''});
+  render();
+}
+
+function hud(){
+  const low=S.oxygen<=3;
+  let o2='';for(let i=0;i<8;i++)o2+=`<i class="${i<S.oxygen?'on':''}"></i>`;
+  let tr='';
+  for(let i=0;i<5;i++){
+    const r=S.results[i];const cls=r===true?'ok':r===false?'ng':(i===S.mi?'cur':'');
+    const mark=r===true?'✓':r===false?'✕':SIZES[S.n][i];
+    tr+=`<div class="m ${cls}" aria-label="第${i+1}任務">${mark}${S.n>=7&&i===3&&r===undefined?'<sup>×2</sup>':''}</div>`;
+  }
+  return `<div class="hud"><div class="o2row"><span class="o2label">酸素 ${S.oxygen}/8</span><div class="o2 ${low?'low':''}">${o2}</div></div><div class="track">${tr}</div></div>`;
+}
+
+function roleInfo(i){
+  const me=P(i),r=me.role,list=[];
+  if(r==='nav'){
+    S.players.forEach((p,j)=>{if(ROLES[p.role].team==='para'&&p.role!=='gho')list.push(j)});
+    return `<div class="info"><p><b>寄生体として見えている人</b></p>${list.map(j=>`<span class="tag">${nm(j)}</span>`).join('')}${S.n>=7?'<p class="muted">このほかに、見えない「幽霊」が1人いる。</p>':''}</div>`;
+  }
+  if(r==='com'){
+    S.players.forEach((p,j)=>{if(p.role==='nav'||p.role==='mim')list.push(j)});
+    return `<div class="info"><p><b>航海士の候補</b>(1人は偽物)</p>${shuffle(list).map(j=>`<span class="tag">${nm(j)}</span>`).join('')}</div>`;
+  }
+  if(ROLES[r].team==='para'){
+    S.players.forEach((p,j)=>{if(j!==i&&ROLES[p.role].team==='para')list.push(j)});
+    return `<div class="info"><p><b>仲間の寄生体</b></p>${list.map(j=>`<span class="tag">${nm(j)}</span>`).join('')}</div>`;
+  }
+  return '';
+}
+
+function passScreen(i,btnLabel,action){
+  return `<div class="pass center"><div class="phone">📱</div><p class="muted">この画面を渡してください</p><div class="display who">${nm(i)} さん</div></div>
+  <button class="btn" data-a="${action}">${btnLabel}</button><p class="muted center">本人以外は画面を見ないでください</p>`;
+}
+
+const views={
+  setup(){
+    let names='';
+    for(let i=0;i<S.n;i++)names+=`<input type="text" data-name="${i}" maxlength="12" placeholder="プレイヤー${i+1}" value="${esc(S.names[i]||'')}" aria-label="プレイヤー${i+1}の名前">`;
+    return `<div style="padding:28px 0 8px"><h1>方舟の<br>寄生体</h1><p class="muted">移民船に紛れた寄生体を見つけ出せ。スマホ1台を回して遊ぶ正体隠匿ゲーム。</p></div>
+    <div class="panel"><b>人数</b><div class="stepper"><button class="step" data-a="dec" aria-label="減らす">−</button><span class="display">${S.n}</span><button class="step" data-a="inc" aria-label="増やす">+</button>
+    <span class="muted">クルー${CREW[S.n]}/寄生体${S.n-CREW[S.n]}</span></div>
+    <div class="names">${names}</div></div>
+    <details class="rules panel"><summary>ルールを確認する</summary><ul>
+    <li>リーダーが任務チームを選び、全員で承認/否決を投票。</li>
+    <li>否決のたびに酸素 −1、任務成功で +1。酸素0で寄生体の勝利。</li>
+    <li>任務メンバーは成功/失敗を秘密で出す。失敗が1枚でもあれば任務失敗(7人以上の第4任務は2枚)。</li>
+    <li>任務失敗時、リーダーはメンバー1人の陣営をスキャンできる。</li>
+    <li>3任務失敗で寄生体の勝利。3任務成功ならエアロック宣告へ:寄生体が航海士を当てれば逆転勝利。</li></ul></details>
+    <button class="btn o2c" data-a="start">役職を配る</button>`;
+  },
+  pass(){return passScreen(S.ri,'役職を見る','showRole')},
+  role(){
+    const p=P(S.ri),R=ROLES[p.role];
+    return `<p class="muted center">${nm(S.ri)} さんの役職</p><div class="rolecard ${R.team}"><div class="emo">${R.emo}</div><div class="display">${R.name}</div>
+    <p class="side">${R.team==='crew'?'クルー陣営':'寄生体陣営'}</p><p style="text-align:left">${R.desc}</p>${roleInfo(S.ri)}</div>
+    <button class="btn" data-a="hideRole">確認した・画面を隠す</button>`;
+  },
+  board(){
+    let chips='';
+    S.players.forEach((p,i)=>{chips+=`<button class="chip ${i===S.leader?'lead':''}" aria-pressed="${S.team.includes(i)}" data-a="toggle" data-v="${i}">${esc(p.name)}</button>`});
+    return `${hud()}${S.toast?`<div class="toast">${S.toast}</div>`:''}<h2>第${S.mi+1}任務</h2>
+    <p>リーダー <b>${nm(S.leader)}</b> さんが、任務に行く <b>${size()}人</b> を選んでください。</p>
+    ${need2()===2?'<p class="muted">この任務は失敗カード2枚で失敗になります。</p>':''}
+    <div class="chips">${chips}</div>
+    <button class="btn" data-a="propose" ${S.team.length===size()?'':'disabled'}>このチームで投票へ(${S.team.length}/${size()})</button>`;
+  },
+  vote(){
+    return `${hud()}<h2>承認投票</h2><div class="panel"><p class="muted">提案チーム</p>${S.team.map(i=>`<span class="tag">${nm(i)}</span>`).join('')}</div>
+    <p>「せーの」で全員一斉に、親指の上下で賛否を示してください。過半数の賛成で承認です。</p>
+    <p class="muted">否決すると酸素が1減ります(残り${S.oxygen})。</p>
+    <div class="row2" style="margin-top:16px"><button class="btn o2c" data-a="approve">承認された</button><button class="btn pc" data-a="reject">否決された</button></div>`;
+  },
+  mpass(){
+    const i=S.team[S.mk];
+    return `${hud()}${S.mk>0?`<p class="muted center">カード ${S.mk}/${S.team.length} 枚 伏せ済み</p>`:''}${passScreen(i,'任務カードを出す','showMission')}`;
+  },
+  mcard(){
+    const i=S.team[S.mk],crew=ROLES[P(i).role].team==='crew';
+    return `<p class="muted center">${nm(i)} さんの任務カード</p><h2 class="center" style="margin:20px 0">どちらを出しますか?</h2>
+    <div class="row2"><button class="btn o2c" style="padding:40px 0" data-a="card" data-v="s">成功</button>
+    <button class="btn pc" style="padding:40px 0" data-a="card" data-v="f" ${crew?'disabled':''}>失敗</button></div>
+    ${crew?'<p class="muted center">クルー陣営は成功しか出せません</p>':''}`;
+  },
+  result(){
+    const cs=S.shownCards.map((c,k)=>`<div class="card ${c}" style="animation-delay:${k*0.45}s">${c==='s'?'✓':'✕'}</div>`).join('');
+    const delay=S.shownCards.length*0.45+0.2;
+    const ok=S.lastOk;
+    return `${hud()}<h2 class="center">第${S.mi+1}任務の結果</h2><div class="cards">${cs}</div>
+    <div class="verdict center" style="animation-delay:${delay}s"><div class="display" style="font-size:2rem;color:var(${ok?'--o2':'--para'})">${ok?'任務成功':'任務失敗'}</div>
+    <p class="muted">${ok?'酸素が1回復しました。':`失敗カード ${S.failCount} 枚。`}</p>
+    <button class="btn" data-a="afterResult">次へ</button></div>`;
+  },
+  scanPick(){
+    const cand=S.team.filter(i=>i!==S.leader);
+    return `${hud()}<h2>スキャン</h2><p>リーダー <b>${nm(S.leader)}</b> さんは、今回の任務メンバーから1人を選んで陣営を確認できます。</p>
+    <div class="chips">${cand.map(i=>`<button class="chip" data-a="scanPick" data-v="${i}">${nm(i)}</button>`).join('')}</div>
+    <button class="btn ghost" data-a="advance">スキャンしない</button>`;
+  },
+  scanPass(){return passScreen(S.leader,'スキャン結果を見る','showScan')},
+  scanShow(){
+    const t=ROLES[P(S.scanT).role].team;
+    return `<p class="muted center">スキャン結果</p><div class="rolecard ${t}"><div class="display">${nm(S.scanT)}</div><p class="side" style="font-size:1.4rem">${t==='crew'?'クルー陣営':'寄生体陣営'}</p></div>
+    <p class="muted">結果を正直に話すかどうかは自由です。</p><button class="btn" data-a="advance">確認した・画面を隠す</button>`;
+  },
+  airlock(){
+    const paras=[],crew=[];
+    S.players.forEach((p,i)=>(ROLES[p.role].team==='para'?paras:crew).push(i));
+    return `${hud()}<h2>エアロック宣告</h2><p>3つの任務が成功しました。寄生体は正体を明かしてください。</p>
+    <div class="panel"><p class="muted">寄生体</p>${paras.map(i=>`<span class="tag" style="color:var(--para)">${nm(i)}</span>`).join('')}</div>
+    <p>寄生体は相談し、<b>航海士だと思う人</b>を1人選んでください。当たれば寄生体の逆転勝利です。</p>
+    <div class="chips">${crew.map(i=>`<button class="chip" data-a="eject" data-v="${i}">${nm(i)}</button>`).join('')}</div>`;
+  },
+  end(){
+    const w=S.winner==='crew';
+    const roster=S.players.map(p=>{const R=ROLES[p.role];return `<div><span>${esc(p.name)}</span><span class="${R.team==='para'?'p':'c'}">${R.emo} ${R.name}</span></div>`}).join('');
+    return `<div class="center" style="padding:30px 0 10px"><div style="font-size:3.4rem">${w?'🚀':'🦠'}</div>
+    <h1 style="color:var(${w?'--o2':'--para'})">${w?'クルーの勝利':'寄生体の勝利'}</h1><p>${S.reason}</p></div>
+    <div class="panel"><b>全員の役職</b><div class="roster">${roster}</div></div>
+    <button class="btn o2c" data-a="start">同じメンバーでもう一度</button><button class="btn ghost" data-a="toSetup">人数・名前を変える</button>`;
+  }
+};
+
+function render(){app.innerHTML=views[S.phase]();window.scrollTo(0,0)}
+function go(p){S.phase=p;render()}
+function endGame(winner,reason){S.winner=winner;S.reason=reason;go('end')}
+function nextLeader(){S.leader=(S.leader+1)%S.n}
+
+const A={
+  inc(){if(S.n<10){S.n++;render()}},
+  dec(){if(S.n>5){S.n--;render()}},
+  start:startGame,
+  toSetup(){go('setup')},
+  showRole(){go('role')},
+  hideRole(){S.ri++;if(S.ri>=S.n){S.toast='全員が役職を確認しました。議論を始めましょう。';go('board')}else go('pass')},
+  toggle(v){v=+v;const k=S.team.indexOf(v);if(k>=0)S.team.splice(k,1);else if(S.team.length<size())S.team.push(v);render()},
+  propose(){S.toast='';go('vote')},
+  reject(){
+    S.oxygen--;
+    if(S.oxygen<=0)return endGame('para','否決が続き、船内の酸素が尽きました。');
+    const prev=nm(S.leader);nextLeader();S.team=[];
+    S.toast=`${prev} さんのチームは否決。酸素 −1。リーダーが交代しました。`;go('board');
+  },
+  approve(){S.cards=[];S.mk=0;go('mpass')},
+  showMission(){go('mcard')},
+  card(v){
+    S.cards.push(v);S.mk++;
+    if(S.mk<S.team.length)return go('mpass');
+    const fails=S.cards.filter(c=>c==='f').length;
+    S.failCount=fails;S.lastOk=fails<need2();
+    S.shownCards=shuffle(S.cards).sort((a,b)=>a===b?0:a==='s'?-1:1);
+    S.results[S.mi]=S.lastOk;
+    if(S.lastOk)S.oxygen=Math.min(8,S.oxygen+1);
+    go('result');
+  },
+  afterResult(){
+    if(okCount()>=3)return go('airlock');
+    if(ngCount()>=3)return endGame('para','3つの任務が妨害され、方舟は制御を失いました。');
+    if(!S.lastOk&&S.team.some(i=>i!==S.leader))return go('scanPick');
+    A.advance();
+  },
+  scanPick(v){S.scanT=+v;go('scanPass')},
+  showScan(){go('scanShow')},
+  advance(){S.mi++;nextLeader();S.team=[];S.toast='';go('board')},
+  eject(v){
+    v=+v;
+    if(P(v).role==='nav')endGame('para',`${nm(v)} さんは航海士でした。寄生体が航路を奪い、逆転勝利です。`);
+    else endGame('crew',`${nm(v)} さんは航海士ではありませんでした。方舟は無事に新天地へ。`);
+  }
+};
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||b.disabled)return;A[b.dataset.a](b.dataset.v)});
+document.addEventListener('input',e=>{if(e.target.dataset.name!==undefined)S.names[+e.target.dataset.name]=e.target.value});
+render();
+</script>
+</body>
+</html>

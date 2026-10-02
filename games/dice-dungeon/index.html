@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ダイス・ダンジョン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#dfe2ea;--ink:#1f2233;--muted:#5b6075;--panel:#eef0f5;--line:#b9bdcb;
+  --stone:#c6cad6;--grid:#b1b6c5;
+  --blue:#2f5fc4;--blueT:#a9c0ef;--red:#b8352f;--redT:#eeb2ad;--gold:#9c7414;
+  --ok:#2f9a5a;--okT:rgba(47,154,90,.35);--ngT:rgba(184,53,47,.35);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#191827;--ink:#ece9f5;--muted:#9a97b3;--panel:#232137;--line:#3b3856;
+  --stone:#2a2840;--grid:#34314d;
+  --blue:#6b97f2;--blueT:#2b4177;--red:#ea6a61;--redT:#6d2b30;--gold:#e7bd52;
+  --ok:#5fd18e;--okT:rgba(95,209,142,.35);--ngT:rgba(234,106,97,.4);
+}}
+:root[data-theme="dark"]{
+  --bg:#191827;--ink:#ece9f5;--muted:#9a97b3;--panel:#232137;--line:#3b3856;
+  --stone:#2a2840;--grid:#34314d;
+  --blue:#6b97f2;--blueT:#2b4177;--red:#ea6a61;--redT:#6d2b30;--gold:#e7bd52;
+  --ok:#5fd18e;--okT:rgba(95,209,142,.35);--ngT:rgba(234,106,97,.4);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;font-size:15px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+#app{max-width:460px;margin:0 auto;padding:10px 12px 24px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+h1{font-family:"DotGothic16",monospace;font-weight:400;font-size:24px;margin:0;letter-spacing:.04em}
+h1 span{color:var(--gold)}
+button{font:inherit;color:inherit;background:var(--panel);border:1.5px solid var(--line);border-radius:8px;padding:7px 11px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--gold);color:#1a1606;border-color:var(--gold);font-weight:700}
+.modes{display:flex;gap:6px}
+.modes button{font-size:12px;padding:5px 8px}
+.pinfo{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;border-radius:8px;border:1.5px solid transparent;font-size:14px}
+.pinfo.on{border-color:currentColor}
+.pinfo .nm{font-weight:700}
+.pinfo.p0{color:var(--blue)} .pinfo.p1{color:var(--red)}
+.pinfo .st{color:var(--ink);display:flex;gap:9px;font-family:"DotGothic16",monospace}
+#board{display:grid;grid-template-columns:repeat(11,1fr);gap:2px;background:var(--grid);padding:2px;border-radius:6px;margin:6px 0;touch-action:manipulation;user-select:none}
+.c{aspect-ratio:1;background:var(--stone);border-radius:3px;position:relative;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,5vw,22px);cursor:pointer}
+.c.p0{background:var(--blueT)} .c.p1{background:var(--redT)}
+.c.lord{font-size:clamp(15px,5.4vw,24px)}
+.c.lord.p0{box-shadow:inset 0 0 0 2px var(--blue)} .c.lord.p1{box-shadow:inset 0 0 0 2px var(--red)}
+.c.pv{background:var(--okT)!important;box-shadow:inset 0 0 0 2px var(--ok)}
+.c.pv.ng{background:var(--ngT)!important;box-shadow:inset 0 0 0 2px var(--red)}
+.c.pv.anc::after{content:"★";color:var(--gold);font-size:.8em}
+.c.mv{box-shadow:inset 0 0 0 2px var(--ok)}
+.c.mv::before{content:"";width:28%;height:28%;border-radius:50%;background:var(--ok);opacity:.8}
+.c.tg{box-shadow:inset 0 0 0 3px var(--red);animation:pulse 1s infinite}
+.c.sel{box-shadow:inset 0 0 0 3px var(--gold)}
+.c.hit{animation:hit .45s}
+@keyframes pulse{50%{box-shadow:inset 0 0 0 1px var(--red)}}
+@keyframes hit{0%,100%{transform:none}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.mon{position:relative;line-height:1;display:flex;flex-direction:column;align-items:center}
+.mon .ow{position:absolute;inset:-3px;border-radius:50%;border:2px solid}
+.mon.o0 .ow{border-color:var(--blue)} .mon.o1 .ow{border-color:var(--red)}
+.hpb{position:absolute;left:8%;right:8%;bottom:2px;height:3px;background:rgba(0,0,0,.25);border-radius:2px;overflow:hidden}
+.hpb i{display:block;height:100%;background:var(--ok)}
+.c.done .mon{opacity:.55}
+#ctrl{background:var(--panel);border-radius:10px;padding:10px;margin-top:4px;min-height:92px}
+#ctrl p{margin:0 0 8px;font-size:13.5px;color:var(--muted)}
+#ctrl .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.die{display:flex;flex-direction:column;align-items:center;min-width:58px;padding:5px 6px;border-radius:8px;font-size:12px;line-height:1.25}
+.die .em{font-size:22px}
+.die .lv{color:var(--gold);font-family:"DotGothic16",monospace}
+.die.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.rolled{display:flex;gap:10px;margin-bottom:8px}
+.face{width:56px;height:56px;border-radius:10px;background:var(--bg);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:"DotGothic16",monospace;font-size:13px}
+.face b{font-size:22px;font-weight:400}
+.face.S{border-color:var(--gold);color:var(--gold)}
+.face.win{background:var(--gold);color:#1a1606}
+.mini{display:inline-grid;gap:1px;margin-right:8px;vertical-align:middle}
+.mini i{width:10px;height:10px;border-radius:2px}
+.mini i.f{background:var(--gold)}
+#detail{font-size:13.5px;padding:6px 2px;min-height:26px;color:var(--muted)}
+#detail b{color:var(--ink)}
+#log{list-style:none;margin:4px 0 0;padding:0;font-size:12.5px;color:var(--muted);max-height:96px;overflow:auto}
+#log li{padding:1px 0}
+details{margin-top:12px;font-size:13.5px;background:var(--panel);border-radius:10px;padding:8px 12px}
+summary{cursor:pointer;font-weight:700}
+details ul{padding-left:1.2em;margin:6px 0}
+#over{position:fixed;inset:0;background:rgba(10,8,20,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+#over[hidden]{display:none}
+#over .box{background:var(--panel);border-radius:14px;padding:22px 26px;text-align:center}
+#over h2{font-family:"DotGothic16",monospace;font-weight:400;font-size:28px;margin:0 0 12px}
+@media (prefers-reduced-motion:reduce){.c.tg,.c.hit{animation:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>ダイス<span>・</span>ダンジョン</h1>
+    <div class="modes"><button id="bCpu">CPU対戦</button><button id="b2p">2人対戦</button></div>
+  </header>
+  <section class="pinfo p1" id="info1"></section>
+  <div id="board" role="grid" aria-label="盤面"></div>
+  <section class="pinfo p0" id="info0"></section>
+  <section id="ctrl"></section>
+  <div id="detail"></div>
+  <ol id="log"></ol>
+  <details>
+    <summary>遊び方</summary>
+    <ul>
+      <li>手持ちのダイスから3つ選んで振ります。</li>
+      <li>同じレベルの「召」が2つ以上出たら、そのダイスを1つ展開できます。展開図の形で盤面に道ができ、★の位置にモンスターが召喚されます。</li>
+      <li>展開図は自分の道（またはダンジョンマスター）に隣接する場所にしか置けません。</li>
+      <li>👣移動・⚔️攻撃・🛡️防御の目はクレストとして貯まります。移動は1マス👣1、攻撃は⚔️1。</li>
+      <li>攻撃されたとき🛡️があれば自動で防御し、ダメージが防御力ぶん減ります。</li>
+      <li>モンスターは道の上だけを移動でき、1ターンに移動・攻撃が各1回。</li>
+      <li>相手のダンジョンマスター（👑）を3回攻撃すれば勝ち。</li>
+    </ul>
+  </details>
+</div>
+<div id="over" hidden><div class="box"><h2 id="overT"></h2><button class="primary" id="again">もう一度遊ぶ</button></div></div>
+<script>
+const W=11,H=15,CAP=10,DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+const TPL={
+ 1:[{n:'カエル騎士',e:'🐸',hp:20,atk:10,def:10},{n:'ネズミ兵',e:'🐀',hp:10,atk:20,def:0},{n:'夜コウモリ',e:'🦇',hp:10,atk:10,def:20}],
+ 2:[{n:'銀牙ウルフ',e:'🐺',hp:20,atk:30,def:10},{n:'岩甲羅',e:'🐢',hp:30,atk:10,def:30},{n:'砂サソリ',e:'🦂',hp:20,atk:20,def:20}],
+ 3:[{n:'紅蓮竜',e:'🐉',hp:40,atk:40,def:20},{n:'獅子王',e:'🦁',hp:30,atk:40,def:30},{n:'古代巨像',e:'🗿',hp:50,atk:30,def:40}]};
+const FACES={1:['S','S','S','M','A','D'],2:['S','S','M','M','A','D'],3:['S','S','M','A','A','D']};
+const CREST={M:'👣',A:'⚔️',D:'🛡️'};
+const CNAME={M:'移動',A:'攻撃',D:'防御'};
+
+// ---- cube nets ----
+const BASE=[];
+for(let a=0;a<4;a++)for(let b=0;b<4;b++)BASE.push([[a,0],[0,1],[1,1],[2,1],[3,1],[b,2]]);
+for(let b=1;b<4;b++)BASE.push([[0,0],[1,0],[1,1],[2,1],[3,1],[b,2]]);
+BASE.push([[0,0],[1,0],[1,1],[2,1],[2,2],[3,2]]);
+BASE.push([[0,0],[1,0],[2,0],[2,1],[3,1],[4,1]]);
+function norm(c){const mx=Math.min(...c.map(p=>p[0])),my=Math.min(...c.map(p=>p[1]));return c.map(p=>[p[0]-mx,p[1]-my]).sort((p,q)=>p[1]-q[1]||p[0]-q[0]);}
+const key=c=>norm(c).map(p=>p.join(',')).join(';');
+function tf(c,r,f){let o=c.map(p=>[...p]);if(f)o=o.map(([x,y])=>[-x,y]);for(let i=0;i<r;i++)o=o.map(([x,y])=>[-y,x]);return norm(o);}
+function canon(c){const ks=[];for(let f=0;f<2;f++)for(let r=0;r<4;r++)ks.push(key(tf(c,r,f)));return ks.sort()[0];}
+const NETS=[];{const s=new Set();for(const b of BASE){const k=canon(b);if(!s.has(k)){s.add(k);NETS.push(norm(b));}}}
+const ALL=[];{const s=new Set();for(const n of NETS)for(let f=0;f<2;f++)for(let r=0;r<4;r++){const t=tf(n,r,f),k=key(t);if(!s.has(k)){s.add(k);ALL.push(t);}}}
+function anchorIdx(c){let best=0,bn=-1;c.forEach((p,i)=>{const n=c.filter(q=>Math.abs(q[0]-p[0])+Math.abs(q[1]-p[1])===1).length;if(n>bn){bn=n;best=i;}});return best;}
+function placeCells(shape,ax,ay){const a=shape[anchorIdx(shape)];return shape.map(([x,y])=>[x-a[0]+ax,y-a[1]+ay]);}
+
+// ---- state ----
+let S;
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const inB=(x,y)=>x>=0&&y>=0&&x<W&&y<H;
+let uid=0;
+function makeDice(){const d=[];[1,1,1,1,2,2,2,2,3,3].forEach(lv=>d.push({id:++uid,lv,tpl:rnd(TPL[lv]),used:false}));return d;}
+function newGame(mode){
+  S={mode,turn:0,phase:'pick',picked:[],rolled:[],summonable:[],placeDie:null,net:0,rot:0,flip:0,anchor:null,sel:null,log:[],busy:false,
+    board:Array.from({length:H},()=>Array.from({length:W},()=>({path:null,lord:null}))),monsters:[],
+    players:[{name:'あなた',hearts:3,crests:{M:0,A:0,D:0},dice:makeDice(),lord:{x:5,y:H-1}},
+             {name:mode==='cpu'?'CPU':'プレイヤー2',hearts:3,crests:{M:0,A:0,D:0},dice:makeDice(),lord:{x:5,y:0}}]};
+  if(mode==='2p')S.players[0].name='プレイヤー1';
+  S.players.forEach((p,i)=>{S.board[p.lord.y][p.lord.x]={path:i,lord:i};});
+  document.getElementById('over').hidden=true;
+  log('ゲーム開始！');
+  startTurn(0);
+}
+const cur=()=>S.players[S.turn];
+const isCpuTurn=()=>S.mode==='cpu'&&S.turn===1;
+const monAt=(x,y)=>S.monsters.find(m=>m.x===x&&m.y===y);
+function log(t){S.log.unshift(t);if(S.log.length>30)S.log.pop();}
+function curShape(){return tf(NETS[S.net],S.rot,S.flip);}
+
+function valid(cells,pl){
+  for(const[x,y]of cells){if(!inB(x,y)||S.board[y][x].path!==null)return false;}
+  for(const[x,y]of cells)for(const[dx,dy]of DIRS){const nx=x+dx,ny=y+dy;if(inB(nx,ny)&&S.board[ny][nx].path===pl)return true;}
+  return false;
+}
+function reach(m){
+  const max=S.players[m.owner].crests.M,dist={},res=[],q=[[m.x,m.y]];dist[m.x+','+m.y]=0;
+  while(q.length){const[x,y]=q.shift(),d=dist[x+','+y];if(d>=max)continue;
+    for(const[dx,dy]of DIRS){const nx=x+dx,ny=y+dy,k=nx+','+ny;if(!inB(nx,ny)||k in dist)continue;
+      const c=S.board[ny][nx];if(c.path===null||c.lord!==null||monAt(nx,ny))continue;
+      dist[k]=d+1;q.push([nx,ny]);res.push({x:nx,y:ny,d:d+1});}}
+  return res;
+}
+function targets(m){
+  const out=[];
+  for(const[dx,dy]of DIRS){const nx=m.x+dx,ny=m.y+dy;if(!inB(nx,ny))continue;
+    const t=monAt(nx,ny);if(t&&t.owner!==m.owner)out.push({x:nx,y:ny,mon:t});
+    const c=S.board[ny][nx];if(c.lord!==null&&c.lord!==m.owner)out.push({x:nx,y:ny,lord:c.lord});}
+  return out;
+}
+function canMove(m){return !m.moved&&S.players[m.owner].crests.M>0;}
+function canAtk(m){return !m.attacked&&S.players[m.owner].crests.A>0;}
+
+function startTurn(t){
+  S.turn=t;S.picked=[];S.rolled=[];S.summonable=[];S.sel=null;S.anchor=null;
+  S.monsters.forEach(m=>{if(m.owner===t){m.moved=false;m.attacked=false;}});
+  const left=cur().dice.filter(d=>!d.used);
+  S.phase=left.length?'pick':'action';
+  if(!left.length)log(`${cur().name}：ダイスが残っていないので行動のみ`);
+  render();
+  if(isCpuTurn())cpuTurn();
+}
+async function doRoll(){
+  const P=cur();const dice=S.picked.map(id=>P.dice.find(d=>d.id===id));
+  S.phase='rolling';S.busy=true;
+  for(let i=0;i<9;i++){S.rolled=dice.map(d=>({die:d,face:rnd(FACES[d.lv])}));render();await sleep(65);}
+  S.rolled=dice.map(d=>({die:d,face:rnd(FACES[d.lv])}));
+  const cnt={};S.rolled.forEach(r=>{if(r.face==='S')cnt[r.die.lv]=(cnt[r.die.lv]||0)+1;});
+  S.summonable=S.rolled.filter(r=>r.face==='S'&&cnt[r.die.lv]>=2).map(r=>r.die);
+  const got=[];S.rolled.forEach(r=>{if(r.face!=='S'){P.crests[r.face]=Math.min(CAP,P.crests[r.face]+1);got.push(CREST[r.face]);}});
+  log(`${P.name}のロール：${S.rolled.map(r=>r.face==='S'?'召'+r.die.lv:CREST[r.face]).join(' ')}${S.summonable.length?' → 召喚チャンス！':''}`);
+  S.phase=S.summonable.length?'summon':'action';S.busy=false;render();
+}
+function summon(die,cells,ax,ay){
+  const P=cur();
+  cells.forEach(([x,y])=>{S.board[y][x].path=S.turn;});
+  die.used=true;
+  const m={id:die.id,owner:S.turn,tpl:die.tpl,hp:die.tpl.hp,x:ax,y:ay,moved:false,attacked:false};
+  S.monsters.push(m);
+  log(`${P.name}はダイスを展開！ ${die.tpl.e}${die.tpl.n}（Lv${die.lv}）を召喚`);
+  S.phase='action';S.anchor=null;S.placeDie=null;
+}
+function move(m,c){S.players[m.owner].crests.M-=c.d;m.x=c.x;m.y=c.y;m.moved=true;}
+function flash(x,y){const el=cellEl[y*W+x];el.classList.remove('hit');void el.offsetWidth;el.classList.add('hit');}
+function attack(m,t){
+  const P=S.players[m.owner];P.crests.A--;m.attacked=true;
+  if(t.lord!==undefined){const L=S.players[t.lord];L.hearts--;
+    log(`${m.tpl.e}${m.tpl.n}がダンジョンマスターを直接攻撃！ ${L.name}のハート残り${L.hearts}`);
+    render();flash(t.x,t.y);if(L.hearts<=0)gameOver(m.owner);return;}
+  const d=t.mon,D=S.players[d.owner];let dmg=m.tpl.atk,note='';
+  if(D.crests.D>0&&d.tpl.def>0){D.crests.D--;dmg=Math.max(0,dmg-d.tpl.def);note='（🛡️で防御）';}
+  d.hp-=dmg;
+  log(`${m.tpl.e}${m.tpl.n}の攻撃！ ${d.tpl.e}${d.tpl.n}に${dmg}ダメージ${note}`);
+  if(d.hp<=0){S.monsters=S.monsters.filter(x=>x!==d);log(`${d.tpl.n}は倒れた`);}
+  render();flash(t.x,t.y);
+}
+function gameOver(w){S.phase='over';render();
+  const t=S.mode==='cpu'?(w===0?'あなたの勝ち！':'CPUの勝ち…'):`${S.players[w].name}の勝ち！`;
+  document.getElementById('overT').textContent=t;document.getElementById('over').hidden=false;}
+function endTurn(){if(S.phase==='over')return;S.sel=null;startTurn(1-S.turn);}
+
+// ---- CPU ----
+const distTo=(x,y,p)=>Math.abs(x-p.lord.x)+Math.abs(y-p.lord.y);
+async function cpuTurn(){
+  const P=cur(),E=S.players[0];S.busy=true;
+  await sleep(600);
+  if(S.phase==='pick'){
+    const left=P.dice.filter(d=>!d.used);let pick=[];
+    if(left.length<=3)pick=left;else{
+      const by={1:[],2:[],3:[]};left.forEach(d=>by[d.lv].push(d));
+      const lvs=[3,2,1].filter(l=>by[l].length>=2).sort((a,b)=>by[b].length-by[a].length||b-a);
+      const lv=lvs.length?(Math.random()<.35&&lvs.includes(3)?3:lvs[0]):1;
+      pick=by[lv].slice(0,3);for(const d of left){if(pick.length>=3)break;if(!pick.includes(d))pick.push(d);}
+    }
+    S.picked=pick.map(d=>d.id);render();await sleep(500);
+    await doRoll();await sleep(500);
+  }
+  if(S.phase==='summon'){
+    const die=[...S.summonable].sort((a,b)=>b.lv-a.lv)[0];let best=null;
+    for(const sh of ALL)for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      const cells=placeCells(sh,x,y);if(!valid(cells,1))continue;
+      const sc=distTo(x,y,E)+Math.min(...cells.map(([a,b])=>distTo(a,b,E)))*.5+Math.random()*1.5;
+      if(!best||sc<best.sc)best={sc,cells,x,y};}
+    if(best){S.placeDie=die;S.anchor=best;render();await sleep(500);summon(die,best.cells,best.x,best.y);}
+    else{log('CPUは置ける場所がなく召喚を見送った');S.phase='action';}
+    render();await sleep(600);
+  }
+  const mine=S.monsters.filter(m=>m.owner===1).sort((a,b)=>distTo(a.x,a.y,E)-distTo(b.x,b.y,E));
+  for(const m of mine){
+    if(S.phase==='over')return;if(!S.monsters.includes(m))continue;
+    if(await cpuAtk(m))continue;
+    if(canMove(m)){const r=reach(m);const now=distTo(m.x,m.y,E);
+      let b=null;for(const c of r){const sc=distTo(c.x,c.y,E)*10+c.d;if(distTo(c.x,c.y,E)<now&&(!b||sc<b.sc))b={...c,sc};}
+      if(b){S.sel=m;render();await sleep(300);move(m,b);render();await sleep(450);}}
+    await cpuAtk(m);
+  }
+  if(S.phase==='over')return;
+  S.sel=null;S.busy=false;await sleep(400);endTurn();
+}
+async function cpuAtk(m){
+  if(!canAtk(m))return false;const ts=targets(m);if(!ts.length)return false;
+  const t=ts.find(x=>x.lord!==undefined)||ts.sort((a,b)=>a.mon.hp-b.mon.hp)[0];
+  S.sel=m;render();await sleep(350);attack(m,t);await sleep(500);return true;
+}
+
+// ---- UI ----
+const boardEl=document.getElementById('board'),cellEl=[];
+for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=document.createElement('div');d.className='c';d.dataset.x=x;d.dataset.y=y;boardEl.appendChild(d);cellEl.push(d);}
+boardEl.addEventListener('click',e=>{const c=e.target.closest('.c');if(!c)return;onCell(+c.dataset.x,+c.dataset.y);});
+
+function onCell(x,y){
+  if(!S||S.busy||isCpuTurn()||S.phase==='over')return;
+  if(S.phase==='place'){S.anchor={x,y};render();return;}
+  const m=monAt(x,y);
+  if(S.phase==='action'&&S.sel){
+    const s=S.sel;
+    if(s.owner===S.turn){
+      if(canAtk(s)){const t=targets(s).find(t=>t.x===x&&t.y===y);if(t){attack(s,t);if(S.phase!=='over')render();return;}}
+      if(canMove(s)){const c=reach(s).find(c=>c.x===x&&c.y===y);if(c){move(s,c);render();return;}}
+    }
+  }
+  S.sel=m||null;render();
+}
+
+function render(){
+  const P=cur();
+  // info
+  [0,1].forEach(i=>{const p=S.players[i],el=document.getElementById('info'+i);
+    el.classList.toggle('on',S.turn===i&&S.phase!=='over');
+    el.innerHTML=`<span class="nm">${S.turn===i?'▶ ':''}${p.name}</span><span class="st"><span>${'❤️'.repeat(Math.max(0,p.hearts))}${'🖤'.repeat(3-Math.max(0,p.hearts))}</span><span>👣${p.crests.M}</span><span>⚔️${p.crests.A}</span><span>🛡️${p.crests.D}</span><span>🎲${p.dice.filter(d=>!d.used).length}</span></span>`;});
+  // board
+  let pv=null,pvOk=false,ancKey='';
+  if(S.phase==='place'&&S.anchor){pv=placeCells(curShape(),S.anchor.x,S.anchor.y);pvOk=valid(pv,S.turn);ancKey=S.anchor.x+','+S.anchor.y;}
+  else if(isCpuTurn()&&S.anchor&&S.anchor.cells){pv=S.anchor.cells;pvOk=true;ancKey=S.anchor.x+','+S.anchor.y;}
+  const pvSet=new Set(pv?pv.map(p=>p.join(',')):[]);
+  let mvSet=new Set(),tgSet=new Set();
+  if(S.phase==='action'&&S.sel&&S.sel.owner===S.turn&&!isCpuTurn()){
+    if(canMove(S.sel))reach(S.sel).forEach(c=>mvSet.add(c.x+','+c.y));
+    if(canAtk(S.sel))targets(S.sel).forEach(t=>tgSet.add(t.x+','+t.y));}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const el=cellEl[y*W+x],c=S.board[y][x],k=x+','+y,m=monAt(x,y);
+    let cls='c';if(c.path!==null)cls+=' p'+c.path;if(c.lord!==null)cls+=' lord';
+    if(pvSet.has(k))cls+=' pv'+(pvOk?'':' ng')+(k===ancKey?' anc':'');
+    if(mvSet.has(k))cls+=' mv';if(tgSet.has(k))cls+=' tg';
+    if(S.sel&&m===S.sel)cls+=' sel';
+    if(m&&m.owner===S.turn&&m.moved&&m.attacked)cls+=' done';
+    if(el.className.replace(' hit','')!==cls)el.className=cls;
+    let html='';
+    if(c.lord!==null)html='👑';
+    else if(m)html=`<span class="mon o${m.owner}"><span class="ow"></span>${m.tpl.e}</span><span class="hpb"><i style="width:${Math.max(0,m.hp/m.tpl.hp*100)}%"></i></span>`;
+    if(el.innerHTML!==html)el.innerHTML=html;
+  }
+  renderCtrl();renderDetail();
+  document.getElementById('log').innerHTML=S.log.slice(0,8).map(t=>`<li>${t}</li>`).join('');
+}
+function dieChip(d,on){return `<button class="die${on?' on':''}" data-die="${d.id}"><span class="em">${d.tpl.e}</span><span>${d.tpl.n}</span><span class="lv">Lv${d.lv}</span></button>`;}
+function facesHTML(){
+  return `<div class="rolled">${S.rolled.map(r=>{const win=S.summonable.includes(r.die);
+    return r.face==='S'?`<div class="face S${win?' win':''}"><b>召</b>Lv${r.die.lv}</div>`:`<div class="face"><b>${CREST[r.face]}</b>${CNAME[r.face]}</div>`;}).join('')}</div>`;
+}
+function miniHTML(sh){const w=Math.max(...sh.map(p=>p[0]))+1,h=Math.max(...sh.map(p=>p[1]))+1,set=new Set(sh.map(p=>p.join(',')));
+  let s=`<span class="mini" style="grid-template-columns:repeat(${w},10px)">`;for(let y=0;y<h;y++)for(let x=0;x<w;x++)s+=`<i class="${set.has(x+','+y)?'f':''}"></i>`;return s+'</span>';}
+function renderCtrl(){
+  const el=document.getElementById('ctrl'),P=cur();
+  if(S.phase==='over'){el.innerHTML='<p>ゲーム終了</p>';return;}
+  if(isCpuTurn()){el.innerHTML=`<p>CPUのターン…</p>${S.rolled.length?facesHTML():''}`;return;}
+  const who=S.mode==='2p'?`<b style="color:var(--${S.turn?'red':'blue'})">${P.name}</b>：`:'';
+  if(S.phase==='pick'){
+    const left=P.dice.filter(d=>!d.used),need=Math.min(3,left.length);
+    el.innerHTML=`<p>${who}振るダイスを${need}つ選んでください。同じレベルを揃えると召喚しやすくなります。</p>
+      <div class="row">${left.map(d=>dieChip(d,S.picked.includes(d.id))).join('')}</div>
+      <div class="row" style="margin-top:8px"><button class="primary" id="bRoll" ${S.picked.length===need?'':'disabled'}>ダイスを振る（${S.picked.length}/${need}）</button></div>`;
+    el.querySelectorAll('[data-die]').forEach(b=>b.onclick=()=>{const id=+b.dataset.die,i=S.picked.indexOf(id);
+      if(i>=0)S.picked.splice(i,1);else if(S.picked.length<need)S.picked.push(id);render();});
+    el.querySelector('#bRoll').onclick=()=>doRoll();return;}
+  if(S.phase==='rolling'){el.innerHTML=`<p>ロール中…</p>${facesHTML()}`;return;}
+  if(S.phase==='summon'){
+    el.innerHTML=`${facesHTML()}<p>${who}召喚できます！展開するダイスを選んでください。</p>
+      <div class="row">${S.summonable.map(d=>dieChip(d,false)).join('')}<button id="bSkip">召喚しない</button></div>`;
+    el.querySelectorAll('[data-die]').forEach(b=>b.onclick=()=>{S.placeDie=S.summonable.find(d=>d.id===+b.dataset.die);S.phase='place';S.anchor=null;render();});
+    el.querySelector('#bSkip').onclick=()=>{S.phase='action';render();};return;}
+  if(S.phase==='place'){
+    const ok=S.anchor&&valid(placeCells(curShape(),S.anchor.x,S.anchor.y),S.turn);
+    el.innerHTML=`<p>${miniHTML(curShape())}${S.placeDie.tpl.e}${S.placeDie.tpl.n}を展開。盤面をタップして★（出現位置）を決めます。自分の道につながる場所にだけ置けます。</p>
+      <div class="row"><button id="bNet">形を変える ${S.net+1}/11</button><button id="bRot">回転</button><button id="bFlip">反転</button></div>
+      <div class="row" style="margin-top:6px"><button class="primary" id="bOk" ${ok?'':'disabled'}>ここに展開</button><button id="bBack">戻る</button></div>`;
+    el.querySelector('#bNet').onclick=()=>{S.net=(S.net+1)%NETS.length;render();};
+    el.querySelector('#bRot').onclick=()=>{S.rot=(S.rot+1)%4;render();};
+    el.querySelector('#bFlip').onclick=()=>{S.flip^=1;render();};
+    el.querySelector('#bBack').onclick=()=>{S.phase='summon';S.anchor=null;render();};
+    el.querySelector('#bOk').onclick=()=>{const cells=placeCells(curShape(),S.anchor.x,S.anchor.y);summon(S.placeDie,cells,S.anchor.x,S.anchor.y);render();};
+    return;}
+  if(S.phase==='action'){
+    const mine=S.monsters.some(m=>m.owner===S.turn);
+    el.innerHTML=`${S.rolled.length?facesHTML():''}<p>${who}${mine?'自分のモンスターをタップ → 緑の点へ移動、赤枠を攻撃。':'まだモンスターがいません。'}</p>
+      <div class="row"><button class="primary" id="bEnd">ターン終了</button></div>`;
+    el.querySelector('#bEnd').onclick=endTurn;}
+}
+function renderDetail(){
+  const el=document.getElementById('detail'),m=S.sel;
+  if(!m||!S.monsters.includes(m)){el.innerHTML='';return;}
+  const own=S.players[m.owner].name;
+  el.innerHTML=`<b>${m.tpl.e} ${m.tpl.n}</b>（${own}）HP <b>${m.hp}</b>/${m.tpl.hp}　攻撃 <b>${m.tpl.atk}</b>　防御 <b>${m.tpl.def}</b>${m.owner===S.turn?`　${m.moved?'移動済':''} ${m.attacked?'攻撃済':''}`:''}`;
+}
+document.getElementById('bCpu').onclick=()=>newGame('cpu');
+document.getElementById('b2p').onclick=()=>newGame('2p');
+document.getElementById('again').onclick=()=>newGame(S.mode);
+newGame('cpu');
+</script>
+</body>
+</html>
