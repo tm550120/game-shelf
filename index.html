@@ -1,109 +1,53 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ゲーム棚</title>
-<meta name="description" content="ブラウザですぐ遊べる自作ゲームの棚。">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#F3EEE4; --ink:#22262E; --sub:#667080; --card:#FFFFFF; --line:#E0D8C8; --shelf:#B98B56; --shelf-d:#8C6436; --accent:#D9483B;
-}
-@media (prefers-color-scheme: dark){
-  :root{ --bg:#15181E; --ink:#ECEEF2; --sub:#98A2B2; --card:#1F242D; --line:#2D3440; --shelf:#6B4E2E; --shelf-d:#49341D; --accent:#FF7A6B; }
-}
-*,*::before,*::after{box-sizing:border-box}
-body{
-  margin:0; background:var(--bg); color:var(--ink);
-  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;
-  font-weight:500; line-height:1.6; -webkit-text-size-adjust:100%;
-  padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);
-}
-main{max-width:980px; margin:0 auto; padding:28px 16px 48px}
-header{margin-bottom:22px}
-h1{font-family:"Dela Gothic One",sans-serif; font-weight:400; font-size:clamp(2.2rem,8vw,3.4rem); line-height:1.1; margin:0 0 6px; letter-spacing:.02em}
-h1 span{color:var(--accent)}
-.lead{margin:0; color:var(--sub)}
-.filters{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 0}
-.filters button{
-  font:inherit; font-weight:700; font-size:.9rem; color:var(--ink); background:var(--card);
-  border:1.5px solid var(--line); border-radius:999px; padding:6px 14px; cursor:pointer;
-}
-.filters button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
-.filters button:focus-visible,.game:focus-visible{outline:3px solid var(--accent); outline-offset:3px}
-.shelf{
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px;
-  padding:0 0 18px; border-bottom:10px solid var(--shelf); box-shadow:0 4px 0 var(--shelf-d);
-  border-radius:0 0 4px 4px;
-}
-.game{
-  display:flex; flex-direction:column; text-decoration:none; color:inherit;
-  background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden;
-  transition:transform .15s ease, box-shadow .15s ease;
-}
-.game:hover{transform:translateY(-4px); box-shadow:0 10px 22px rgba(0,0,0,.14)}
-.cover{height:108px; display:grid; place-items:center; font-size:3.2rem; background:var(--c)}
-.body{padding:12px 14px 14px; display:flex; flex-direction:column; gap:6px; flex:1}
-.game h2{font-size:1.15rem; font-weight:800; margin:0; line-height:1.3}
-.game p{margin:0; font-size:.9rem; color:var(--sub); flex:1}
-.tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px}
-.tags span{font-size:.75rem; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--bg); border:1px solid var(--line)}
-.play{margin-top:8px; font-weight:800; color:var(--accent)}
-footer{margin-top:28px; color:var(--sub); font-size:.85rem}
-.game[hidden]{display:none}
-@media (prefers-reduced-motion: reduce){.game{transition:none}.game:hover{transform:none}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f4ed">
+  <meta name="description" content="ひとりでじっくり、みんなでわいわい。ブラウザですぐ遊べる自作ゲームを集めた、小さなゲーム棚。">
+  <title>ゲーム棚 | 今日の遊びを、ひとつ。</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/shelf.css">
+  <script src="assets/catalog.js" defer></script>
+  <script src="assets/shelf.js" defer></script>
 </head>
-<body>
-<main>
-  <header>
-    <h1>ゲーム<span>棚</span></h1>
-    <p class="lead">遊びたいゲームを選んでタップ。インストール不要で、そのままブラウザで遊べます。</p>
-    <div class="filters" id="filters" role="group" aria-label="絞り込み"></div>
-  </header>
-  <div class="shelf" id="shelf"></div>
-  <footer>戻るときはブラウザの「戻る」でこのページに帰ってこられます。</footer>
-</main>
-<script>
-const GAMES = [
-  {dir:"trigger-tactics", title:"陣取りトリガー戦", emoji:"🎯", color:"#2B3A55",
-   desc:"6つの兵種を編成して中継点を奪い合う、ターン制タクティクス。", players:"1人", tags:["戦略"]},
-  {dir:"dice-dungeon", title:"ダイス・ダンジョン", emoji:"🎲", color:"#5B3F8C",
-   desc:"ダイスを展開して道をつくり、モンスターを召喚。相手のマスターを3回攻撃すれば勝ち。", players:"1〜2人", tags:["戦略","対戦"]},
-  {dir:"kadotori", title:"カドトリ", emoji:"🔶", color:"#EFA00B",
-   desc:"ピースを角だけでつなげて陣地を広げる、CPU対戦の陣取りパズル。", players:"1人", tags:["戦略","パズル"]},
-  {dir:"mofuru-gym", title:"開拓の島 モフルジム", emoji:"🏝️", color:"#3E9E7A",
-   desc:"資源を集めて道とジムを建て、モフルを進化させてバッジを集める開拓ゲーム。", players:"みんなで", tags:["戦略","ボードゲーム"]},
-  {dir:"hakobune", title:"方舟の寄生体", emoji:"🚀", color:"#1D2B45",
-   desc:"移民船に紛れた寄生体を見つけ出せ。スマホ1台を回して遊ぶ正体隠匿ゲーム。", players:"みんなで", tags:["パーティー"]},
-  {dir:"ponpon-rhythm", title:"ぽんぽんリズム", emoji:"🐸", color:"#7BC74D",
-   desc:"カエルのリズムをまねしたり、タイミングよく席をゆずったり。音を出して遊ぶリズムゲーム。", players:"1人", tags:["リズム"]},
-  {dir:"himitsu-no-hana", title:"ひみつの花の謎", emoji:"🌹", color:"#C8375A",
-   desc:"3つの謎を解くと最後の扉がひらく、短編の謎解き。", players:"1人", tags:["謎解き","パズル"]},
-];
-const shelf = document.getElementById("shelf"), filters = document.getElementById("filters");
-for (const g of GAMES) {
-  const a = document.createElement("a");
-  a.className = "game"; a.href = "games/" + g.dir + "/"; a.dataset.tags = g.tags.join(",");
-  a.innerHTML = `<div class="cover" style="--c:${g.color}" aria-hidden="true">${g.emoji}</div>
-    <div class="body"><h2>${g.title}</h2><p>${g.desc}</p>
-    <div class="tags"><span>${g.players}</span>${g.tags.map(t=>`<span>${t}</span>`).join("")}</div>
-    <div class="play">あそぶ →</div></div>`;
-  shelf.appendChild(a);
-}
-const tags = ["すべて", ...new Set(GAMES.flatMap(g => g.tags))];
-tags.forEach((t, i) => {
-  const b = document.createElement("button");
-  b.textContent = t; b.setAttribute("aria-pressed", i === 0);
-  b.onclick = () => {
-    filters.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
-    shelf.querySelectorAll(".game").forEach(el => el.hidden = !(t === "すべて" || el.dataset.tags.split(",").includes(t)));
-  };
-  filters.appendChild(b);
-});
-</script>
+<body id="top">
+  <a class="skip-link" href="#collection">ゲーム一覧へ</a>
+  <div class="page">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="ゲーム棚 ホーム"><img src="assets/favicon.svg" width="36" height="36" alt=""><span>ゲーム棚</span><span class="brand-en" lang="en">GAME SHELF</span></a>
+      <a class="header-link" href="#collection">ゲームを探す <span aria-hidden="true">↗</span></a>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> A LITTLE COLLECTION OF PLAY</p>
+          <h1 id="hero-title">今日の遊びを、<br><span>ひとつ。</span></h1>
+          <p class="hero-description">ひとりでじっくり、みんなでわいわい。<br>気になるゲームを、棚からどうぞ。</p>
+          <a class="button button-dark" href="#collection">ゲームを選ぶ <span aria-hidden="true">↓</span></a>
+          <p class="hero-note"><span aria-hidden="true">✓</span> インストール不要・ブラウザですぐ遊べる</p>
+        </div>
+        <article class="featured" aria-labelledby="featured-title">
+          <div class="featured-top"><span class="small-label">PICK UP</span><span class="source-label"><span aria-hidden="true">↗</span> 別リポジトリ連携</span></div>
+          <img class="featured-art" src="assets/covers/mofuru-gym.svg" alt="" width="480" height="260">
+          <div class="featured-info"><div><p class="featured-kicker">小さな島で、大きな冒険。</p><h2 id="featured-title">開拓の島 モフルジム</h2></div><a id="featured-play" class="round-link" href="https://tm550120.github.io/mofuru-gym/index.html" aria-label="開拓の島 モフルジムの公開版で遊ぶ">↗</a></div>
+          <p class="featured-note">公開中の本編へ。更新はモフルジム側からそのまま届きます。</p>
+        </article>
+      </section>
+      <section id="collection" class="collection" aria-labelledby="collection-title">
+        <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2 id="collection-title">遊びを見つける<span id="total-count" class="total-count">7</span></h2></div><button id="surprise" class="text-button" type="button" hidden><span aria-hidden="true">⚄</span> おまかせで選ぶ <span aria-hidden="true">↗</span></button></div>
+        <div id="discovery" class="discovery" hidden>
+          <div class="search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><label class="sr-only" for="search">ゲームを検索</label><input id="search" type="search" placeholder="タイトルやキーワードで検索" autocomplete="off" maxlength="100"></div>
+          <div id="filters" class="filters" role="group" aria-label="ジャンルで絞り込む"></div>
+        </div>
+        <p id="result-count" class="result-count" role="status" aria-live="polite" aria-atomic="true"></p>
+        <div id="shelf" class="shelf"></div>
+        <div id="empty-state" class="empty-state" hidden><span aria-hidden="true">⌕</span><h3>ぴったりのゲームが見つかりませんでした</h3><p>別のキーワードやジャンルで探してみてください。</p><button id="reset" class="button button-dark" type="button">絞り込みをリセット</button></div>
+        <noscript><p>JavaScript が無効のため、一覧からゲームを開いてください。ゲーム本編には JavaScript が必要です。</p><ul class="fallback-list"><li><a href="games/trigger-tactics/">陣取りトリガー戦</a></li><li><a href="games/dice-dungeon/">ダイス・ダンジョン</a></li><li><a href="games/kadotori/">カドトリ</a></li><li><a href="https://tm550120.github.io/mofuru-gym/index.html">開拓の島 モフルジム（公開版）</a></li><li><a href="games/hakobune/">方舟の寄生体</a></li><li><a href="games/ponpon-rhythm/">ぽんぽんリズム</a></li><li><a href="games/himitsu-no-hana/">ひみつの花の謎</a></li></ul></noscript>
+      </section>
+      <aside class="shelf-note"><span class="note-icon" aria-hidden="true">↩</span><div><h2>ひと休みしたら、またこの棚へ。</h2><p>ゲームは同じタブで開きます。ブラウザの「戻る」で、次の遊びを探せます。</p></div><a href="#top" class="back-top" aria-label="ページの先頭へ戻る">↑</a></aside>
+    </main>
+    <footer class="site-footer"><span>ゲーム棚 <span class="footer-en" lang="en">A SMALL SHELF, MANY ADVENTURES.</span></span><a href="https://github.com/tm550120/game-shelf">GitHub <span aria-hidden="true">↗</span></a></footer>
+  </div>
 </body>
 </html>
