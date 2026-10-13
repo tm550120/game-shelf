@@ -36,8 +36,8 @@ function setup(query = '', { denyHistory = false } = {}) {
   return { nodes, window, windowEvents, docEvents, filter, search, visible };
 }
 
-test('catalog has seven unique games and valid local entry points and covers', () => {
-  assert.equal(games.length, 7); assert.equal(new Set(games.map(g => g.id)).size, games.length);
+test('catalog has eight unique games and valid local entry points and covers', () => {
+  assert.equal(games.length, 8); assert.equal(new Set(games.map(g => g.id)).size, games.length);
   for (const g of games) {
     assert.ok(g.title && g.description && g.tags.length && g.players);
     assert.ok(fs.existsSync(path.join(root, g.cover)));
@@ -52,10 +52,10 @@ test('Mofuru uses the user-confirmed canonical URL, never the copied game', () =
   assert.equal(g.repository, 'https://github.com/tm550120/mofuru-gym');
   assert.ok(g.external);
 });
-test('initial shelf renders seven semantic links and live result count', () => {
-  const t = setup(); assert.equal(t.visible().length, 7);
+test('initial shelf renders eight semantic links and live result count', () => {
+  const t = setup(); assert.equal(t.visible().length, 8);
   assert.ok(t.visible().every(n => n.tagName === 'A' && n.href && n.attributes['aria-labelledby']));
-  assert.match(t.nodes['result-count'].textContent, /7作品のうち 7作品/);
+  assert.match(t.nodes['result-count'].textContent, /8作品のうち 8作品/);
   assert.equal(t.nodes.discovery.hidden, false);
   assert.equal(t.nodes['featured-play'].href, games.find(g => g.external).href);
 });
@@ -78,7 +78,7 @@ test('empty results show recovery, disable random, and reset restores focus', ()
   assert.equal(t.visible().length, 0); assert.equal(t.nodes['empty-state'].hidden, false); assert.equal(t.nodes.surprise.disabled, true);
   t.nodes.surprise.events.click(); // Defensive even if invoked programmatically.
   t.nodes.reset.events.click();
-  assert.equal(t.visible().length, 7); assert.equal(t.nodes.search.focused, true); assert.equal(t.nodes['empty-state'].hidden, true);
+  assert.equal(t.visible().length, 8); assert.equal(t.nodes.search.focused, true); assert.equal(t.nodes['empty-state'].hidden, true);
   assert.equal(new URL(t.window.location.href).search, '');
 });
 test('URL state restores filters and caps untrusted input', () => {
@@ -91,7 +91,7 @@ test('URL state restores filters and caps untrusted input', () => {
 test('Back/Forward and bfcache restore URL state', () => {
   const t = setup(); t.window.location.href += '?tag=' + encodeURIComponent('リズム');
   t.windowEvents.popstate(); assert.deepEqual(t.visible().map(n => n.dataset.game), ['ponpon-rhythm']);
-  t.window.location.href = 'https://tm550120.github.io/game-shelf/'; t.windowEvents.pageshow(); assert.equal(t.visible().length, 7);
+  t.window.location.href = 'https://tm550120.github.io/game-shelf/'; t.windowEvents.pageshow(); assert.equal(t.visible().length, 8);
 });
 test('random choice only selects a visible card and keeps one highlight', () => {
   const t = setup(); t.filter('パズル');
