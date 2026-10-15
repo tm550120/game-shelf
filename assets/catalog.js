@@ -8,7 +8,8 @@
     { id: "mofuru-gym", title: "開拓の島 モフルジム", subtitle: "MOFURU GYM", description: "資源を集めて道とジムを建て、モフルを進化。CPU戦やオンライン対戦で島を開拓しよう。", players: "1人／オンライン2〜3人", tags: ["戦略", "ボードゲーム", "対戦"], href: "https://tm550120.github.io/mofuru-gym/index.html", repository: "https://github.com/tm550120/mofuru-gym", cover: "assets/covers/mofuru-gym.svg", tone: "green", external: true },
     { id: "hakobune", title: "方舟の寄生体", subtitle: "THE ARK", description: "移民船に紛れた寄生体を見つけ出せ。スマホ1台を回して遊ぶ、正体隠匿ゲーム。", players: "みんなで", tags: ["パーティー"], href: "games/hakobune/", cover: "assets/covers/hakobune.svg", tone: "space" },
     { id: "ponpon-rhythm", title: "ぽんぽんリズム", subtitle: "PONPON RHYTHM", description: "カエルのリズムをまねして、タイミングよくタップ。音を出して楽しむリズムゲーム。", players: "1人", tags: ["リズム"], href: "games/ponpon-rhythm/", cover: "assets/covers/ponpon-rhythm.svg", tone: "lime", note: "音あり推奨" },
-    { id: "himitsu-no-hana", title: "ひみつの花の謎", subtitle: "THE SECRET FLOWER", description: "3つの謎を解くと、最後の扉がひらく。ひらめきを頼りに進む、小さな謎解きの物語。", players: "1人", tags: ["謎解き", "パズル"], href: "games/himitsu-no-hana/", cover: "assets/covers/himitsu-no-hana.svg", tone: "rose" }
+    { id: "himitsu-no-hana", title: "ひみつの花の謎", subtitle: "THE SECRET FLOWER", description: "3つの謎を解くと、最後の扉がひらく。ひらめきを頼りに進む、小さな謎解きの物語。", players: "1人", tags: ["謎解き", "パズル"], href: "games/himitsu-no-hana/", cover: "assets/covers/himitsu-no-hana.svg", tone: "rose" },
+    { id: "gold-wing", title: "ゴールドウィング", subtitle: "GOLD WING", description: "ちびっこ戦闘機で空中戦！マウスで操縦、アイテムを拾ってCOM機を撃ち落とせ。キャニオンや子供部屋を飛ぶ3Dフライトシューティング。", players: "1人", tags: ["シューティング", "アクション"], href: "games/gold-wing/", cover: "assets/covers/gold-wing.svg", tone: "sky", note: "マウス推奨" }
   ];
   games.forEach(game => { Object.freeze(game.tags); Object.freeze(game); });
   const catalog = Object.freeze({ games: Object.freeze(games), allTag: "すべて" });

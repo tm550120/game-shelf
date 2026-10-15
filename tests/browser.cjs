@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
     const page = await context.newPage(); const errors = [];
     page.on('pageerror', error => errors.push(String(error)));
     await page.goto(base); await page.locator('.game').last().waitFor();
-    assert.equal(await page.locator('.game:visible').count(), 7);
+    assert.equal(await page.locator('.game:visible').count(), 8);
     assert.equal(await page.locator('[data-game="mofuru-gym"]').getAttribute('href'), canonical);
     await page.screenshot({ path: path.join(output, 'desktop.png'), fullPage: true });
     await page.getByRole('button', { name: 'パズル', exact: true }).click();
@@ -40,7 +40,7 @@ const server = http.createServer((req, res) => {
     assert.equal(await page.locator('#empty-state').isVisible(), true);
     assert.equal(await page.locator('#surprise').isDisabled(), true);
     await page.getByRole('button', { name: '絞り込みをリセット' }).click();
-    assert.equal(await page.locator('.game:visible').count(), 7);
+    assert.equal(await page.locator('.game:visible').count(), 8);
     await page.getByRole('button', { name: /おまかせで選ぶ/ }).click();
     assert.equal(await page.locator('.game.picked').count(), 1);
     assert.equal(await page.locator('.game.picked').evaluate(el => el === document.activeElement), true);
@@ -64,7 +64,7 @@ const server = http.createServer((req, res) => {
     await page.goBack(); assert.equal(page.url(), base + '/');
     const noJs = await browser.newContext({ javaScriptEnabled: false });
     const fallback = await noJs.newPage(); await fallback.goto(base + '/');
-    assert.equal(await fallback.locator('noscript a').count(), 7);
+    assert.equal(await fallback.locator('noscript a').count(), 8);
     await fallback.goto(base + '/games/mofuru-gym/');
     assert.equal(await fallback.locator('#canonical-game').getAttribute('href'), canonical);
     assert.deepEqual(errors, []);

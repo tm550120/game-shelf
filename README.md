@@ -24,6 +24,7 @@ HTML / CSS / JavaScript だけで動きます。アプリ本体に npm 依存や
 | `assets/shelf.css` | レスポンシブな見た目とアクセシビリティ |
 | `assets/covers/` | 各作品をイメージした装飾用 SVG（実際のゲーム画面ではありません） |
 | `games/<名前>/index.html` | このリポジトリで管理するゲーム本体 |
+| `games/gold-wing/index.html` | ゴールドウィング（Three.js による 3D フライトシューティング。CDN から three@0.160.0 を読み込みます） |
 | `games/mofuru-gym/index.html` | 旧 URL 用の案内・転送ページ |
 | `assets/redirect.js` | モフルジム公開版への履歴を置き換える転送 |
 
